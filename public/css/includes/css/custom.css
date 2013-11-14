@@ -9,27 +9,25 @@
 // @red: #FC4349;
 */
 
-.magic {
+.magic, body {
+	background: #6DBCDB;
+}
+
+#chart {
 	background-color: #2C3E50;
-}
-
-#chart h4 {
-	color: #6DBCDB;
-}
-
-#chart h6 {
-	color:  #6DBCDB;
 }
 
 #chart2 {
 	background-color: #FFFFFF;
 }
 
-#chart2 h4 {
-	color: #FC4349;
+#chart h4,
+#chart h6 {
+	color: #6DBCDB;
 }
 
+#chart2 h4,
 #chart2 h6 {
-	color:  #FC4349;
+	color: #FC4349;
 }
 

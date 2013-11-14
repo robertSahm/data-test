@@ -101,6 +101,7 @@ d3.json('http://localhost:1337/api/getdata', function (data) {
 	  .attr('stroke-width', '1')
 	  .attr('stroke-opacity', '1')
 	  .attr('fill-opacity', '1')
+	  .attr('ry', '7')
 	  .attr('fill', '#6DBCDB');
 
 	// bar value labels
@@ -119,7 +120,7 @@ d3.json('http://localhost:1337/api/getdata', function (data) {
 	barsContainer.append("line")
 	  .attr("y1", -gridChartOffset)
 	  .attr("y2", yScale.rangeExtent()[1] + gridChartOffset)
-	  //.style("stroke", "white"); 
+	  .style("stroke", "#2C3E50"); 
 });
 
 
