@@ -1,0 +1,642 @@
+
+<div class="container">
+	<div class="row">
+	
+		<div class="col-sm-6" id="chart">
+			<h4>Latency vs Liquidity Provider</h4>
+			<h6>In milliseconds (shorter is better)</h6>
+		</div>
+	
+		<div class="col-sm-6" id="chart2">
+			<h4>Latency vs Client</h4>
+			<h6>In milliseconds (shorter is better)</h6>
+		</div>
+	
+		<div id="test" style="margin-left: 50px;">
+			
+		</div>
+	
+	</div>
+</div>
+
+<!-- 
+@white: #FFFFFF;
+@grey: #D7DADB;
+@blueLight: #6DBCDB;
+@blueDark: #2C3E50;
+@red: #FC4349;
+ -->
+<script>
+d3.json('http://localhost:1337/api/getdata', function (data) {
+	
+
+	var valueLabelWidth = 40; // space reserved for value labels (right)
+	var barHeight = 20; // height of one bar
+	var barLabelWidth = 20; // space reserved for bar labels
+	var barLabelPadding = 9; // padding between bar and bar labels (left)
+	var gridLabelHeight = 18; // space reserved for gridline labels
+	var gridChartOffset = 3; // space between start of grid and first bar
+	var maxBarWidth = 420; // width of the bar with the max value
+	 
+	// accessor functions 
+	var barLabel = function(d) { return d['LiquidityProvider']; };
+	var barValue = function(d) { return parseFloat(d['latency']); };
+	 
+	// sorting
+	var sortedData = data.sort(function(a, b) {
+	  return d3.ascending(barValue(a), barValue(b)); 
+	}); 
+
+	// scales
+	var yScale = d3.scale.ordinal().domain(d3.range(0, sortedData.length)).rangeBands([0, sortedData.length * barHeight]);
+	var y = function(d, i) { return yScale(i); };
+	var yText = function(d, i) { return y(d, i) + yScale.rangeBand() / 2; };
+	var x = d3.scale.linear().domain([0, d3.max(sortedData, barValue)]).range([0, maxBarWidth]);
+
+	// svg container element
+	var chart = d3.select('#chart').append("svg")
+	  .attr('width', maxBarWidth + barLabelWidth + valueLabelWidth)
+	  .attr('height', gridLabelHeight + gridChartOffset + sortedData.length * barHeight);
+
+	// grid line labels
+	var gridContainer = chart.append('g')
+	  .attr('transform', 'translate(' + barLabelWidth + ',' + gridLabelHeight + ')'); 
+	gridContainer.selectAll("text").data(x.ticks(10)).enter().append("text")
+	  .attr("x", x)
+	  .attr("dy", -6)
+	  .attr("text-anchor", "middle")
+	  .attr('font-size', '.85em')
+	  .attr("fill", "#D7DADB")
+	  .text(String);
+
+	// vertical grid lines
+	gridContainer.selectAll("line").data(x.ticks(10)).enter().append("line")
+	  .attr("x1", x)
+	  .attr("x2", x)
+	  .attr("y1", 0)
+	  .attr("y2", yScale.rangeExtent()[1] + gridChartOffset)
+	  .style("stroke", "#D7DADB");
+
+	// bar labels
+	var labelsContainer = chart.append('g')
+	  .attr('transform', 'translate(' + (barLabelWidth - barLabelPadding) + ',' + (gridLabelHeight + gridChartOffset) + ')'); 
+	labelsContainer.selectAll('text').data(sortedData).enter().append('text')
+	  .attr('y', yText)
+	  .attr('stroke', 'none')
+	  .attr('fill', '#D7DADB')
+	  .attr("dy", ".35em") // vertical-align: middle
+	  .attr('text-anchor', 'end')
+	  
+	  .text(barLabel);
+
+	// bars
+	var barsContainer = chart.append('g')
+	  .attr('transform', 'translate(' + barLabelWidth + ',' + (gridLabelHeight + gridChartOffset) + ')'); 
+		barsContainer.selectAll("rect").data(sortedData).enter().append("rect")
+	  .attr('y', y)
+	  .attr('height', yScale.rangeBand())
+	  .attr('width', function(d) { return x(barValue(d)); })
+	  .attr('stroke', '#D7DADB')
+	  .attr('fill', '#6DBCDB');
+
+	// bar value labels
+	barsContainer.selectAll("text").data(sortedData).enter().append("text")
+	  .attr("x", function(d) { return x(barValue(d)); })
+	  .attr("y", yText)
+	  .attr("dx", 7) // padding-left
+	  .attr("dy", ".35em") // vertical-align: middle
+	  .attr("text-anchor", "start") // text-align: right
+	  .attr("fill", "white") // text color
+	  //.attr("font-family", "times") // font
+	  .attr("font-size", ".8em")
+	  .attr("stroke", "none")
+	  .text(function(d) { return d3.round(barValue(d), 1); });
+
+	// start line
+	barsContainer.append("line")
+	  .attr("y1", -gridChartOffset)
+	  .attr("y2", yScale.rangeExtent()[1] + gridChartOffset)
+	  //.style("stroke", "white"); 
+});
+
+
+
+
+
+
+// Chart #2 - Latency vs Client
+
+d3.json('http://localhost:1337/api/getdata', function (data) {
+
+	var valueLabelWidth = 40; // space reserved for value labels (right)
+	var barHeight = 20; // height of one bar
+	var barLabelWidth = 100; // space reserved for bar labels
+	var barLabelPadding = 5; // padding between bar and bar labels (left)
+	var gridLabelHeight = 18; // space reserved for gridline labels
+	var gridChartOffset = 3; // space between start of grid and first bar
+	var maxBarWidth = 420; // width of the bar with the max value
+	 
+	// accessor functions 
+	var barLabel = function(d) { return d['Client']; };
+	var barValue = function(d) { return parseFloat(d['latency']); };
+	 
+	// sorting
+	var sortedData = data.sort(function(a, b) {
+	  return d3.ascending(barLabel(a), barLabel(b)); 
+	}); 
+
+	// scales
+	var yScale = d3.scale.ordinal().domain(d3.range(0, sortedData.length)).rangeBands([0, sortedData.length * barHeight]);
+	var y = function(d, i) { return yScale(i); };
+	var yText = function(d, i) { return y(d, i) + yScale.rangeBand() / 2; };
+	var x = d3.scale.linear().domain([0, d3.max(sortedData, barValue)]).range([0, maxBarWidth]);
+	// svg container element
+	var chart = d3.select('#chart2').append("svg")
+	  .attr('width', maxBarWidth + barLabelWidth + valueLabelWidth)
+	  .attr('height', gridLabelHeight + gridChartOffset + sortedData.length * barHeight);
+	// grid line labels
+	var gridContainer = chart.append('g')
+	  .attr('transform', 'translate(' + barLabelWidth + ',' + gridLabelHeight + ')'); 
+	gridContainer.selectAll("text").data(x.ticks(10)).enter().append("text")
+	  .attr("x", x)
+	  .attr("dy", -3)
+	  .attr("text-anchor", "middle")
+	  .text(String);
+	// vertical grid lines
+	gridContainer.selectAll("line").data(x.ticks(10)).enter().append("line")
+	  .attr("x1", x)
+	  .attr("x2", x)
+	  .attr("y1", 0)
+	  .attr("y2", yScale.rangeExtent()[1] + gridChartOffset)
+	  .style("stroke", "#ccc");
+	// bar labels
+	var labelsContainer = chart.append('g')
+	  .attr('transform', 'translate(' + (barLabelWidth - barLabelPadding) + ',' + (gridLabelHeight + gridChartOffset) + ')'); 
+	labelsContainer.selectAll('text').data(sortedData).enter().append('text')
+	  .attr('y', yText)
+	  .attr('stroke', 'none')
+	  .attr('fill', 'black')
+	  .attr("dy", ".35em") // vertical-align: middle
+	  .attr('text-anchor', 'end')
+	  .text(barLabel);
+	// bars
+	var barsContainer = chart.append('g')
+	  .attr('transform', 'translate(' + barLabelWidth + ',' + (gridLabelHeight + gridChartOffset) + ')'); 
+		barsContainer.selectAll("rect").data(sortedData).enter().append("rect")
+	  .attr('y', y)
+	  .attr('height', yScale.rangeBand())
+	  .attr('width', function(d) { return x(barValue(d)); })
+	  .attr('stroke', 'white')
+	  .attr('fill', 'steelblue');
+	// bar value labels
+	barsContainer.selectAll("text").data(sortedData).enter().append("text")
+	  .attr("x", function(d) { return x(barValue(d)); })
+	  .attr("y", yText)
+	  .attr("dx", 3) // padding-left
+	  .attr("dy", ".35em") // vertical-align: middle
+	  .attr("text-anchor", "start") // text-align: right
+	  .attr("fill", "black")
+	  .attr("stroke", "none")
+	  .text(function(d) { return d3.round(barValue(d), 2); });
+	// start line
+	barsContainer.append("line")
+	  .attr("y1", -gridChartOffset)
+	  .attr("y2", yScale.rangeExtent()[1] + gridChartOffset)
+	  .style("stroke", "#000");
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Good to go
+// d3.json('http://localhost:1337/api/getdata', function (data) {
+
+// 	var barChart = dc.rowChart("#row-demo");
+// 	var ndx = crossfilter(data);
+
+// 	var barWidth = 10;
+// 	var width = (barWidth + 6) * data.length; // spacing between bars
+// 	var height = 300; // Max height limit
+
+// 	var x = d3.scale.linear().domain([0, data.length]).range([0, width]);
+// 	var y = d3.scale.linear().domain([0, d3.max(data, function(datum) { return datum.latency; })]).
+// 	  rangeRound([0, height]);
+
+
+// 	  var barDemo = d3.select("#row-demo").
+// 	    append("svg:svg").
+// 	    attr("width", width).
+// 	    attr("height", height);
+
+// 	  barDemo.selectAll("rect").
+// 	    data(data).
+// 	    enter().
+// 	    append("svg:rect").
+// 	    attr("x", function(datum, index) { return x(index); }).
+// 	    attr("y", function(datum) { return height - y(datum.latency); }).
+// 	    attr("height", function(datum) { return y(datum.latency); }).
+// 	    attr("width", barWidth).
+// 	    attr("fill", "#2d578b").
+// 	    order(d3.ascending);
+
+// 	    //Chained into the text grabber...
+// 	    // barDemo.selectAll("text").
+// 	    //   data(data).
+// 	    //   enter().
+// 	    //   append("svg:text").
+// 	    //   attr("x", function(datum, index) { return x(index) + barWidth; }).
+// 	    //   attr("y", function(datum) { return height - y(datum.latency); }).
+// 	    //   attr("dx", -barWidth/2).
+// 	    //   attr("dy", "1.2em").
+// 	    //   attr("text-anchor", "middle").
+// 	    //   text(function(datum) { return datum.latency;}).
+// 	    //   attr("fill", "white");
+
+	      
+
+// });
+
+
+
+// Good to go
+// d3.json('http://localhost:1337/api/getdata', function (error, data) {
+// 	var chart = dc.barChart("#test");
+
+// 	data.forEach(function(x) {
+// 	  x.latency = +x.latency;
+// 	});
+
+// 	var ndx             = crossfilter(data),
+// 	    volumeDimension = ndx.dimension(function(d) {return +d.volume;}),
+// 	    latencySumGroup = volumeDimension.group().reduceSum(function(d) {return d.latency * d.volume / 1000;});
+
+// 	chart
+// 	  .width(1000)
+// 	  .height(480)
+// 	  .x(d3.scale.linear().domain([0,1000000]))
+// 	  .y(d3.scale.linear().domain([0,1000000]))
+// 	  .brushOn(true)
+// 	  .xAxisLabel("volume")
+// 	  .yAxisLabel("Latency")
+// 	  .dimension(volumeDimension)
+// 	  .group(latencySumGroup);
+
+
+// 		// d3.selectAll("text")
+// 		//   .data(data)
+// 		//   .enter()
+// 		//   .append("svg:text")
+// 		//   .attr("color", "red")
+// 		//   .attr("fill", "red");
+
+
+// 	chart.render();
+
+
+
+// });
+
+
+
+
+
+
+
+
+
+
+
+// d3.json('http://localhost:1337/api/getdata', function (data) {
+
+// 	var barChart = dc.rowChart("#row-demo");
+// 	var ndx = crossfilter(data);
+
+// 	var barWidth = 10;
+// 	var width = (barWidth + 6) * data.length; // spacing between bars
+// 	var height = 300; // Max height limit
+
+// 	var x = d3.scale.linear().domain([0, data.length]).range([0, width]);
+// 	var y = d3.scale.linear().domain([0, d3.max(data, function(datum) { return datum.latency; })]).
+// 	  rangeRound([0, height]);
+
+
+// 	  var barDemo = d3.select("#row-demo").
+// 	    append("svg:svg").
+// 	    attr("width", width).
+// 	    attr("height", height);
+
+// 	  barDemo.selectAll("rect").
+// 	    data(data).
+// 	    enter().
+// 	    append("svg:rect").
+// 	    attr("x", function(datum, index) { return x(index); }).
+// 	    attr("y", function(datum) { return height - y(datum.latency); }).
+// 	    attr("height", function(datum) { return y(datum.latency); }).
+// 	    attr("width", barWidth).
+// 	    attr("fill", "#2d578b").
+// 	    order(d3.ascending);
+
+// 	    //Chained into the text grabber...
+// 	    // barDemo.selectAll("text").
+// 	    //   data(data).
+// 	    //   enter().
+// 	    //   append("svg:text").
+// 	    //   attr("x", function(datum, index) { return x(index) + barWidth; }).
+// 	    //   attr("y", function(datum) { return height - y(datum.latency); }).
+// 	    //   attr("dx", -barWidth/2).
+// 	    //   attr("dy", "1.2em").
+// 	    //   attr("text-anchor", "middle").
+// 	    //   text(function(datum) { return datum.latency;}).
+// 	    //   attr("fill", "white");
+
+	      
+
+// });
+
+
+
+
+
+
+
+
+// d3.json('http://localhost:1337/api/getdata', function (data) {
+// 	var barChart = dc.rowChart("#row-demo");
+// 	var ndx = crossfilter(data);
+
+// 	var barWidth = 10;
+// 	var width = (barWidth + 3) * data.length;
+// 	var height = 400;
+
+// 	var x = 0;
+// 	var y = d3.scale.linear().domain([0, d3.max(data, function(datum) { 
+// 		return datum.latency; 
+// 	})]).rangeRound([0, height]);
+
+// });
+
+
+
+// d3.json('http://localhost:1337/api/getdata', function (data) {
+
+// 	var barChart = dc.rowChart("#row-demo");
+// 	var ndx = crossfilter(data);
+
+// 	var barWidth = 10;
+// 	var width = (barWidth + 3) * data.length;
+// 	var height = 400;
+
+// 	var x = d3.scale.linear().domain([0, data.length]).range([0, width]);
+// 	var y = d3.scale.linear().domain([0, d3.max(data, function(datum) { return datum.latency; })]).
+// 	  rangeRound([0, height]);
+
+
+// 	  var barDemo = d3.select("#row-demo").
+// 	    append("svg:svg").
+// 	    attr("width", width).
+// 	    attr("height", height);
+
+// 	  barDemo.selectAll("rect").
+// 	    data(data).
+// 	    enter().
+// 	    append("svg:rect").
+// 	    attr("x", function(datum, index) { return x(index); }).
+// 	    attr("y", function(datum) { return height - y(datum.latency); }).
+// 	    attr("height", function(datum) { return y(datum.latency); }).
+// 	    attr("width", barWidth).
+// 	    attr("fill", "#2d578b").
+// 	    order(d3.ascending);
+
+// 	    barDemo.selectAll("text").
+// 	      data(data).
+// 	      enter().
+// 	      append("svg:text").
+// 	      attr("x", function(datum, index) { return x(index) + barWidth; }).
+// 	      attr("y", function(datum) { return height - y(datum.latency); }).
+// 	      attr("dx", -barWidth/2).
+// 	      attr("dy", "1.2em").
+// 	      attr("text-anchor", "middle").
+// 	      text(function(datum) { return datum.latency;}).
+// 	      attr("fill", "white");
+
+	      
+
+// });
+
+// d3.json('http://localhost:1337/api/getdata', function (data) {
+
+// 	var rowChart = dc.rowChart("#row-demo");
+// 	var ndx = crossfilter(data);
+
+// 	var barHeight = 10;
+// 	var height = (barHeight + 3) * data.length; // spacer
+// 	var width = 700;
+	
+
+// 	var x = d3.scale.linear().domain([0, data.length]).range([0, width]);
+// 	var y = d3.scale.linear().domain([0, d3.max(data, function(datum) { return datum.latency; })]).rangeRound([0, height]);
+
+// 	var rowDemo = d3.select("#row-demo").
+// 	  append("svg:svg").
+// 	  attr("width", width).
+// 	  attr("height", height);
+
+// 	  rowDemo.selectAll("rect").
+// 	    data(data).
+// 	    enter().
+// 	    append("svg:rect").
+// 	    attr("x", function(datum, index) { return x(index); }).
+// 	    attr("y", function(datum) { return height - y(datum.latency); }).
+// 	    attr("width", function(datum) { return y(datum.latency); }).
+// 	    attr("height", barHeight).
+// 	    attr("fill", "#2d578b");
+
+// 	    // barDemo.selectAll("text.yAxis").
+// 	    //   data(data).
+// 	    //   enter().append("svg:text").
+// 	    //   attr("x", function(datum, index) { return x(index) + barHeight; }).
+// 	    //   attr("y", width).
+// 	    //   attr("dx", -barHeight/2).
+// 	    //   //attr("text-anchor", "middle").
+// 	    //   attr("style", "font-size: 12; font-family: Helvetica, sans-serif,", "color: red").
+// 	    //   text(function(datum) { return datum.latency;}).
+// 	    //   //attr("transform", "translate(0, 18)").
+// 	    //   attr("class", "xAxis");
+
+// });
+
+
+
+
+
+// d3.json('http://localhost:1337/api/getdata', function (data) {
+
+// 	var rowChart = dc.rowChart("#row-demo");
+// 	var ndx = crossfilter(data);
+
+// 	var rowHeight = 20;
+// 	var width = 100; // max height
+// 	var height = (rowHeight + 5) * data.length; // space between bars
+
+
+// 	var y = d3.scale.linear().domain([0, data.length]).range([0, width]);
+// 	var x = d3.scale.linear().domain([0, d3.max(data, function(datum) { return datum.latency; })]).
+// 	  rangeRound([0, height]);
+
+
+// 	  var rowDemo = d3.select("#row-demo").
+// 	    append("svg:svg").
+// 	    attr("width", width).
+// 	    attr("height", height);
+
+// 	  rowDemo.selectAll("rect").
+// 	    data(data).
+// 	    enter().
+// 	    append("svg:rect").
+// 	    attr("x", function(datum, index) { return x(index); }).
+// 	    attr("y", function(datum) { return height - y(datum.latency); }).
+// 	    attr("height", function(datum) { return y(datum.latency); }).
+// 	    attr("width", rowHeight).
+// 	    attr("fill", "#2d578b");
+
+// 	    // barDemo.selectAll("text").
+// 	    //   data(data).
+// 	    //   enter().
+// 	    //   append("svg:text").
+// 	    //   attr("x", function(datum, index) { return x(index) + barWidth; }).
+// 	    //   attr("y", function(datum) { return height - y(datum.latency); }).
+// 	    //   attr("dx", -barWidth/2).
+// 	    //   attr("dy", "1.2em").
+// 	    //   attr("text-anchor", "middle").
+// 	    //   text(function(datum) { return datum.latency;}).
+// 	    //   attr("fill", "white");
+
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// CLEAN COPY
+// d3.json('http://localhost:1337/api/getdata', function (data) {
+
+// 	var barChart = dc.rowChart("#row-demo");
+// 	var ndx = crossfilter(data);
+
+// 	var barWidth = 10;
+// 	var width = (barWidth + 3) * data.length;
+// 	var height = 400;
+
+// 	var x = d3.scale.linear().domain([0, data.length]).range([0, width]);
+// 	var y = d3.scale.linear().domain([0, d3.max(data, function(datum) { return datum.latency; })]).
+// 	  rangeRound([0, height]);
+
+
+// 	  var barDemo = d3.select("#row-demo").
+// 	    append("svg:svg").
+// 	    attr("width", width).
+// 	    attr("height", height);
+
+// 	  barDemo.selectAll("rect").
+// 	    data(data).
+// 	    enter().
+// 	    append("svg:rect").
+// 	    attr("x", function(datum, index) { return x(index); }).
+// 	    attr("y", function(datum) { return height - y(datum.latency); }).
+// 	    attr("height", function(datum) { return y(datum.latency); }).
+// 	    attr("width", barWidth).
+// 	    attr("fill", "#2d578b").
+// 	    order(d3.ascending);
+
+// 	    barDemo.selectAll("text").
+// 	      data(data).
+// 	      enter().
+// 	      append("svg:text").
+// 	      attr("x", function(datum, index) { return x(index) + barWidth; }).
+// 	      attr("y", function(datum) { return height - y(datum.latency); }).
+// 	      attr("dx", -barWidth/2).
+// 	      attr("dy", "1.2em").
+// 	      attr("text-anchor", "middle").
+// 	      text(function(datum) { return datum.latency;}).
+// 	      attr("fill", "white");
+
+	      
+
+// });
+
+
+
+
+
+
+
+
+
+// var dataTable = dc.dataTable("#dc-table-graph");
+
+// d3.json('http://localhost:1337/api/getdata', function (data) {
+
+// 	var rowChart = dc.rowChart("#dc-lat-chart");
+// 	var ndx = crossfilter(data);
+
+// 	var x = d3.scale.linear().domain([0, d3.max(data, function(datum) { return datum.latency; })])
+// 	var y = d3.scale.linear().domain([0, data.length]).range([0, width]);
+
+
+// 	var barHeight = 20;
+// 	var width = (barHeight + 20) * data.length;
+// 	var height = 400;
+
+// 	var rowChart = d3.select("#dc-lat-chart").
+// 	  append("svg:svg").
+// 	  attr("width", width).
+// 	  attr("height", height);
+
+// 	rowChart.selectAll("rect").
+// 	  data(data).
+// 	  enter().
+// 	  append("svg:rect").
+
+
+// 	  attr("y", function(datum) { return height - y(datum.latency); }).
+// 	  attr("x", function(datum, index) { return x(index); }).
+// 	  attr("width", function(datum) { return y(datum.latency); }).
+// 	  attr("height", barHeight).
+// 	  attr("fill", "#2d578b");
+
+
+// });
+
+
+
+
+
+
+
+
+
+
+
+</script>
