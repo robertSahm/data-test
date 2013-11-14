@@ -13,10 +13,23 @@
 	background-color: #2C3E50;
 }
 
-h6 {
+#chart h4 {
+	color: #6DBCDB;
+}
+
+#chart h6 {
+	color:  #6DBCDB;
+}
+
+#chart2 {
+	background-color: #FFFFFF;
+}
+
+#chart2 h4 {
 	color: #FC4349;
 }
 
-h4 {
-	color: #FC4349;
+#chart2 h6 {
+	color:  #FC4349;
 }
+
